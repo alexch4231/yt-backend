@@ -15,14 +15,23 @@ app.get('/download', async (req, res) => {
     const videoUrl = `https://www.youtube.com/watch?v=${id}`;
 
     try {
-        // Opciones adicionales para evitar restricciones de IP de Render
+        // Configuramos un agente simulando un navegador web para evitar el error 429
+        const agent = ytdl.createAgent([
+            {
+                cookie: '',
+                // Simula un navegador moderno de escritorio
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        ]);
+
         const options = {
+            agent: agent,
             quality: format === 'mp3' ? 'highestaudio' : 'highestvideo',
             filter: format === 'mp3' ? 'audioonly' : 'videoandaudio',
             highWaterMark: 1 << 25
         };
 
-        const info = await ytdl.getInfo(videoUrl);
+        const info = await ytdl.getInfo(videoUrl, { agent });
         const title = info.videoDetails.title.replace(/[^a-zA-Z0-9]/g, "_");
 
         if (format === 'mp3') {
