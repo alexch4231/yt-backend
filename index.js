@@ -15,23 +15,30 @@ app.get('/download', async (req, res) => {
     const videoUrl = `https://www.youtube.com/watch?v=${id}`;
 
     try {
+        // Opciones adicionales para evitar restricciones de IP de Render
+        const options = {
+            quality: format === 'mp3' ? 'highestaudio' : 'highestvideo',
+            filter: format === 'mp3' ? 'audioonly' : 'videoandaudio',
+            highWaterMark: 1 << 25
+        };
+
         const info = await ytdl.getInfo(videoUrl);
         const title = info.videoDetails.title.replace(/[^a-zA-Z0-9]/g, "_");
 
         if (format === 'mp3') {
             res.header('Content-Disposition', `attachment; filename="${title}.mp3"`);
             res.header('Content-Type', 'audio/mpeg');
-            ytdl(videoUrl, { filter: 'audioonly', quality: 'highestaudio' }).pipe(res);
+            ytdl(videoUrl, options).pipe(res);
         } else {
             res.header('Content-Disposition', `attachment; filename="${title}.mp4"`);
             res.header('Content-Type', 'video/mp4');
-            ytdl(videoUrl, { quality: 'highestvideo' }).pipe(res);
+            ytdl(videoUrl, options).pipe(res);
         }
     } catch (err) {
-        console.error(err);
-        res.status(500).send('Error al procesar el video');
+        console.error("Error detallado:", err.message);
+        res.status(500).send('Error al procesar el video: ' + err.message);
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor activo en el puerto ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor activo en puerto ${PORT}`));
